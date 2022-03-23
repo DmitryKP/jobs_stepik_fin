@@ -2,7 +2,7 @@
 
 {% block container %}
 {% for vac in vacancies %}
-  <main class="container mt-3 pb-5">
+  <main class="container mt-3 pb-5" method="GET">
     <div class="row mt-5">
       <div class="col-12 col-lg-2">
         <div class="pl-3 mb-5">
@@ -11,7 +11,7 @@
       </div>
       <div class="col-12 col-lg-8">
         <section class="pl-3">
-          <a href="#"><img src="{{vac.company.logo}}" width="130" height="80" alt=""></a>
+          <img src="{{vac.company.logo.url}}" width="130" height="80" alt="">
           <div class="d-flex align-items-baseline align-content-baseline">
             <h1 class="h2 mt-4 font-weight-bold" >{{vac.title}}</h1>
             <p class="m-0 pl-3">{{vac.salary_min}} – {{vac.salary_max}} Р</p>
@@ -23,21 +23,23 @@
                 {{vac.description|safe}}
           </div>
           {% endfor %}
-          <form action="/echo" class="card mt-4 mb-3" enctype="multipart/form-data">
+          <form class="card mt-4 mb-3" enctype="multipart/form-data" method="POST">
+            {% csrf_token %}
             <div class="card-body mx-3">
               <p class="h5 mt-3 font-weight-normal">Отозваться на вакансию</p>
               <div class="form-group">
                 <label class="mb-1 mt-2" for="userName">Вас зовут</label>
-                <input class="form-control" type="text" placeholder="" id="userName">
+                <input class="form-control" required type="text"  placeholder="" id="userName" name="{{ appl_form.written_username.name }}" value="{{ appl_form.written_username.value|default_if_none:'' }}">
               </div>
               <div class="form-group">
                 <label class="mb-1" for="userPhone">Ваш телефон</label>
-                <input class="form-control" type="tel" placeholder="" id="userPhone">
+                <input class="form-control" required type="tel" placeholder="" id="userPhone" name="{{ appl_form.written_phone.name }}" value="{{ appl_form.written_phone.value|default_if_none:'' }}">
               </div>
               <div class="form-group">
                 <label class="mb-1" for="userMsg" >Сопроводительное письмо</label>
-                <textarea class="form-control" rows="8" id="userMsg"></textarea>
-              </div>
+                <textarea class="form-control" required rows="8" id="userMsg" name="{{ appl_form.written_cover_letter.name }}" value="{{ appl_form.written_cover_letter.value|default_if_none:'' }}" ></textarea>
+
+                <p class="text-muted">{{ error_message }} </p>
               <input type="submit" class="btn btn-primary mt-4 mb-2" value="Записаться на пробный урок">
             </div>
           </form>

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Создать карточку компании | Джуманджи</title>
+  <title>Моя компания | Джуманджи</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
@@ -22,16 +22,13 @@
       </button>
       <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
         <ul class="navbar-nav col-10">
-          <li class="nav-item">
-            <a class="nav-link text-dark" href="#">Вакансии</a>
-          </li>
 
         </ul>
         <ul class="navbar-nav col-2 justify-content-end">
           <li class="nav-item active">
             <div class="btn-group">
               <button type="button" class="btn dropdown-toggle font-weight-bold" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Иван Топорыжкин
+                {{ user.get_username }}
               </button>
               <div class="dropdown-menu dropdown-menu-right mt-3">
                 <a href="#" class="dropdown-item py-2">Профиль</a>
@@ -47,13 +44,32 @@
   </header>
 
   <main class="container mt-3 pb-5">
-    <section class="col-12 col-lg-6 offset-lg-3 mt-5 card">
-      <div class="card-body px-3 pb-4">
-        <h1 class="h4 pt-2">Моя компания</h1>
-        <p class="mt-2">Пока мы думаем, что вы – частное лицо. Хотите создать карточку компании, разместить информаию и вакансии?</p>
-        <a href="#" class="btn btn-info mb-2">Создать карточку компании</a>
+      <div class="col-12 col-lg-8">
+        <div class="card">
+          <div class="card-body px-4 pb-4 justify-content-center">
+            <!-- Tab -->
+            <section class="tab-pane fade show active">
+              <h2 class="h4 pt-2 pb-3">Информация о&nbsp;компании</h2>
+              {% if messages %}
+              <ul class="messages">
+                  {% for message in messages %}
+                  <li  {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </li>
+                  {% endfor %}
+              </ul>
+              {% endif %}
+              <form enctype="multipart/form-data" method="POST">
+                {% csrf_token %}
+                 {% load crispy_forms_tags %}
+                 {% crispy c_form "bootstrap4" %}
+                <div class="form-group">
+                  <input type="submit" class="btn btn-info" value="Сохранить">
+                </div>
+              </form>
+            </section>
+            <!-- END Tab -->
+          </div>
+        </div>
       </div>
-    </section>
   </main>
 
   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

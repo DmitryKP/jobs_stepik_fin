@@ -18,13 +18,27 @@
       <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
         <ul class="navbar-nav col-10">
           <li class="nav-item">
-            <a class="nav-link" href="#">Вакансии</a>
+            <a class="nav-link" href="/vacancies">Вакансии</a>
           </li>
         </ul>
         <ul class="navbar-nav col-2 justify-content-end">
           <li class="nav-item active">
-            <a href="#" class="nav-link font-weight-bold">Вход</a>
+            <a href="/login" class="nav-link font-weight">Hello, {{ user.username|default:'Guest' }}!</a>
+            </li>
+            {% if user.is_authenticated %}
+          <li class="nav-item active">
+            <a href="/mycompany/letsstart" class="nav-link font-weight-bold">Моя компания</a>
           </li>
+          <li class="nav-item active">
+            <a href="/logout" class="nav-link font-weight-bold">Выйти</a>
+          </li>
+           {% else %}
+          <li class="nav-item active">
+            <a href="/login" class="nav-link font-weight-bold">Войти</a>
+          </li>
+          {% endif %}
+
+
         </ul>
       </div>
     </nav>
