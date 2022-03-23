@@ -1,10 +1,13 @@
 asgiref==3.5.0
 Django==3.2.12
+django-crispy-forms==1.14.0
 flake8==4.0.1
+gunicorn==20.1.0
 importlib-metadata==4.2.0
 mccabe==0.6.1
 numpy==1.21.5
 pandas==1.1.5
+Pillow==9.0.1
 pycodestyle==2.8.0
 pyflakes==2.4.0
 python-dateutil==2.8.2
