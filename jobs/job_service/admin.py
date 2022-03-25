@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vacancy, Company, Application, Specialty
+from .models import Vacancy, Company, Application, Specialty, Resume
 
 
 class VacancyAdmin(admin.ModelAdmin):
@@ -18,7 +18,12 @@ class SpecialtyAdmin(admin.ModelAdmin):
     pass
 
 
+class ResumeAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(Vacancy, VacancyAdmin)
 admin.site.register(Company, CompanyAdmin)
 admin.site.register(Application, ApplicationAdmin)
 admin.site.register(Specialty, SpecialtyAdmin)
+admin.site.register(Resume, ResumeAdmin)

@@ -18,11 +18,11 @@
             <p class="mb-4 h5 font-weight-light">Создайте аккаунт</p>
           </div>
           {% csrf_token %}
-          {% for field in user_form %}
-          {{ field.errors }}
+          {% for field in r_form %}
           <div class="form-label-group">
             <p class="my-2 text-muted">{{ field.label }}</p>
             <input type="text" name="{{ field.name }}" value="{{ field.value|default_if_none:'' }}" class="form-control" required autofocus>
+            {{ field.errors }}
           </div>
           {% endfor %}
           <div class="checkbox mb-3"></div>

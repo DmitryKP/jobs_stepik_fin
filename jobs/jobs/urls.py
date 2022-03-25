@@ -24,24 +24,34 @@ from job_service.views import main_view, all_vacancies, spec_vacancies, one_vaca
      custom_handler400, custom_handler403, custom_handler404, custom_handler500, \
      start_create_company, create_company, edit_company, \
      list_vacancy, create_vacancy, edit_vacancy, one_vacancy_send, \
-     RegisterView, LoginView
+     RegisterView, LoginView, \
+     search_vacancies, start_create_resume, create_resume, edit_resume
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path('', main_view.as_view(), name="main"),
-    path('vacancies/', all_vacancies.as_view()),
-    path('vacancies/cat/<str:specialization>', spec_vacancies.as_view()),
     path('vacancies/<int:vacancy>', one_vacancy.as_view(), name="vac"),
     path('vacancies/<int:vacancy>/send/', one_vacancy_send.as_view(), name="vac_send"),
+    path('vacancies/', all_vacancies.as_view()),
+    path('vacancies/cat/<str:specialization>', spec_vacancies.as_view()),
     path('companies/<int:company>', one_company.as_view()),
     path('mycompany/letsstart/', start_create_company.as_view()),
     path('mycompany/create/', create_company.as_view(), name="create_company"),
     path('mycompany/', edit_company.as_view(), name="edit_company"),
     path('mycompany/vacancies/', list_vacancy.as_view()),
-    path('mycompany/vacancies/create/', create_vacancy.as_view()),
-    path('mycompany/vacancies/<int:vacancy>/', edit_vacancy.as_view()),
-    path('admin/', admin.site.urls),
-    path('register/', RegisterView, name="registration"),
-    path('login/', LoginView,  name="auth"),
+    path('mycompany/vacancies/create/', create_vacancy.as_view(), name="create_vacancy"),
+    path('mycompany/vacancies/<int:vacancy>/', edit_vacancy.as_view(), name="edit_vacancy"),
+
+
+    path('search', search_vacancies.as_view(), name="search_results"),
+    path('myresume/letsstart', start_create_resume.as_view()),
+    path('myresume/create', create_resume.as_view(), name="create_resume"),
+    path('myresume/', edit_resume.as_view(), name="edit_resume"),
+
+
+
+    path('register/', RegisterView.as_view(), name="registration"),
+    path('login/', LoginView.as_view(),  name="auth"),
     path('logout/', LogoutView.as_view())
 
 ]

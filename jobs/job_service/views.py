@@ -1,13 +1,14 @@
 from django.views import View
 from django.http import HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, HttpResponseServerError
-from django.shortcuts import render, redirect, get_list_or_404
+from django.shortcuts import render, redirect, get_list_or_404, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
+from django.db.models import Q
 import datetime
-from job_service.models import Company, Specialty, Vacancy, Application
-from accounts.forms import UserRegistrationForm, UserLoginForm, ApplicationForm, CompanyForm, VacancyForm
+from job_service.models import Company, Specialty, Vacancy, Application, Resume
+from accounts.forms import UserRegistrationForm, UserLoginForm, ApplicationForm, CompanyForm, VacancyForm, ResumeForm
 
 
 class main_view(View):
@@ -50,9 +51,6 @@ class one_vacancy(View):
             return render(request, 'vacancy.html', context={'appl_form': form,
                                                             'vacancies': Vacancy.objects.filter(id=vacancy).all(),
                                                             'error_message': 'Заполните все поля для отправки формы'})
-
-        return render(request, 'vacancy.html', context={'vacancies': Vacancy.objects.filter(id=vacancy).all(),
-                                                        'appl_form': form})
 
 
 class one_vacancy_send(View):
@@ -98,17 +96,17 @@ class create_company(View):
             )
 
             new_c.save()
+            messages.success(request, 'Компания создана. Отредактируйте ее здесь')
             return redirect('edit_company')
         else:
             return render(request, 'company-create.html', context={'c_form': form,
                                                                    'error_message': 'Заполните все поля корректно для отправки формы'})
-        return render(request, 'company-create.html', context={'c_form': form})
 
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 class edit_company(View):
     def get(self, request):
-        cdata_user = Company.objects.filter(owner_id=request.user.id).first()
+        cdata_user = get_object_or_404(Company, owner_id=request.user.id)
         form = CompanyForm(initial={'name': cdata_user.name,
                                     'location': cdata_user.location,
                                     'description': cdata_user.description,
@@ -136,7 +134,7 @@ class edit_company(View):
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 class list_vacancy(View):
     def get(self, request):
-        company_user_id = Company.objects.filter(owner_id=request.user.id).first().id
+        company_user_id = get_object_or_404(Company, owner_id=request.user.id).id
         return render(request, 'vacancy-list.html', context={
                                              'vacs': Vacancy.objects.filter(company_id=company_user_id).all()})
 
@@ -162,18 +160,18 @@ class create_vacancy(View):
             )
 
             new_v.save()
-            messages.success(request, 'Вакансия создана')
+            messages.success(request, 'Вакансия создана. Отредактируйте ее здесь')
+            return redirect("edit_vacancy", vacancy=new_v.id)
         else:
             return render(request, 'vacancy-create.html', context={'v_form': form,
                                                                    'error_message': 'Залогиньтесь и заполните и заполните все поля для отправки формы'})
-        return render(request, 'vacancy-create.html', context={'v_form': form})
 
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 class edit_vacancy(View):
     def get(self, request, vacancy):
         if Company.objects.filter(owner_id=request.user.id).first().id == Vacancy.objects.filter(id=vacancy).first().company_id:
-            vdata = Vacancy.objects.filter(id=vacancy).first()
+            vdata = get_object_or_404(Vacancy, id=vacancy)
             form = VacancyForm(initial={'title': vdata.title,
                                         'salary_min': vdata.salary_min,
                                         'salary_max': vdata.salary_max,
@@ -213,27 +211,37 @@ class edit_vacancy(View):
 
 
 # Authorize funcs
-def RegisterView(request):
-    user_form = UserRegistrationForm(request.POST)
-    if request.user.is_authenticated:
-        return redirect('/')
-    else:
-        if request.POST and user_form.is_valid():
-            new_user = user_form.save(commit=False)
+class RegisterView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect('main')
+        else:
+            form = UserRegistrationForm()
+            return render(request, 'register.html', context={'r_form': form})
+
+    def post(self, request):
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            new_user = form.save(commit=False)
             new_user.save()
             login(request, new_user)
-            return redirect("main")
+            return redirect('main')
         else:
-            user_form = UserRegistrationForm()
-    return render(request, 'register.html', {'user_form': user_form})
+            return render(request, 'register.html', context={'r_form': form,
+                                                             'error_message': 'Форма заполнена некорректно'})
 
 
-def LoginView(request):
-    form = UserLoginForm(request.POST)
-    if request.user.is_authenticated:
-        return redirect('/')
-    else:
-        if request.POST and form.is_valid():
+class LoginView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect('main')
+        else:
+            form = UserLoginForm()
+            return render(request, 'login.html', context={'u_form': form})
+
+    def post(self, request):
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
 
@@ -243,10 +251,100 @@ def LoginView(request):
                 login(request, user)
                 return redirect("main")
             else:
-                return render(request, 'login.html', {
-                    'error_message': ' Авторизация не успешна. Попробуйте еще раз'})
+                return render(request, 'login.html', {'u_form': form,
+                                                      'error_message': 'Авторизация не успешна. Попробуйте еще раз'})
 
-    return render(request, "login.html", {"login_form": form})
+
+# LK Resume
+
+class search_vacancies(View):
+
+    def get(self, request):
+        query = self.request.GET.get('s')
+        print(query)
+        search_res = Vacancy.objects.filter(
+           Q(title__icontains=query) | Q(description__icontains=query)
+        ).all()
+        return render(request, 'search.html', context={'s_list': search_res})
+
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+class start_create_resume(View):
+    def get(self, request):
+        if Resume.objects.filter(user_id=request.user.id).all():
+            return redirect('edit_resume')
+        else:
+            return render(request, 'resume-letsstart.html', context={})
+
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+class create_resume(View):
+    def get(self, request):
+        if Resume.objects.filter(user_id=request.user.id).all():
+            return HttpResponseNotFound('У вас уже есть одно резюме')
+        else:
+            form = ResumeForm()
+            return render(request, 'resume-create.html', context={'r_form': form})
+
+    def post(self, request):
+        form = ResumeForm(request.POST)
+        if request.user.is_authenticated and form.is_valid():
+            new_r = Resume.objects.create(
+                name=form.cleaned_data["name"],
+                surname=form.cleaned_data["surname"],
+                status=form.cleaned_data["status"],
+                salary=form.cleaned_data["salary"],
+                specialty=form.cleaned_data["specialty"],
+                education=form.cleaned_data["education"],
+                experience=form.cleaned_data["experience"],
+                grade=form.cleaned_data["grade"],
+                portfolio=form.cleaned_data["portfolio"],
+                user_id=request.user.id
+            )
+
+            new_r.save()
+            messages.success(request, 'Резюме создано. Отредактируйте его здесь')
+            return redirect('edit_resume')
+        else:
+            return render(request, 'resume-create.html', context={'r_form': form,
+                                                                  'error_message': 'Залогиньтесь и заполните и заполните все поля для отправки формы'})
+
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+class edit_resume(View):
+    def get(self, request):
+        rdata_user = get_object_or_404(Resume, user_id=request.user.id)
+        form = ResumeForm(initial={'name': rdata_user.name,
+                                   'surname': rdata_user.surname,
+                                   'status': rdata_user.status,
+                                   'salary': rdata_user.salary,
+                                   'specialty': rdata_user.specialty,
+                                   'education': rdata_user.education,
+                                   'experience': rdata_user.experience,
+                                   'grade': rdata_user.grade,
+                                   'portfolio': rdata_user.portfolio})
+        return render(request, 'resume-edit.html', context={'r_form': form})
+
+    def post(self, request):
+        form = ResumeForm(request.POST)
+        if request.user.is_authenticated and form.is_valid():
+            Resume.objects.filter(user_id=request.user.id).update(
+                name=form.cleaned_data["name"],
+                surname=form.cleaned_data["surname"],
+                status=form.cleaned_data["status"],
+                salary=form.cleaned_data["salary"],
+                specialty=form.cleaned_data["specialty"],
+                education=form.cleaned_data["education"],
+                experience=form.cleaned_data["experience"],
+                grade=form.cleaned_data["grade"],
+                portfolio=form.cleaned_data["portfolio"],
+                user_id=request.user.id
+            )
+
+            messages.success(request, 'Ваше резюме изменено')
+        else:
+            return render(request, 'resume-edit.html', context={'r_form': form, 'error_message': 'Залогиньтесь и заполните все поля для отправки формы'})
+        return render(request, 'resume-edit.html', context={'r_form': form})
 
 
 # Handlers

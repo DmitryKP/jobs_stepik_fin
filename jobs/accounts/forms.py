@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from job_service.models import Application, Company, Vacancy
+from job_service.models import Application, Company, Vacancy, Resume
 from django.forms import ModelForm
 from crispy_forms.helper import FormHelper
 
@@ -45,7 +45,7 @@ class CompanyForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CompanyForm, self).__init__(*args, **kwargs)
-        self.fields['name'].label = "Имя"
+        self.fields['name'].label = "Название"
         self.fields['location'].label = "Локация"
         self.fields['description'].label = "Описание"
         self.fields['employee_count'].label = "Кол-во работников"
@@ -68,6 +68,28 @@ class VacancyForm(ModelForm):
         self.fields['salary_min'].label = "Зарплата от"
         self.fields['salary_max'].label = "Зарплата до"
         self.fields['specialty'].label = "Специализация"
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+
+class ResumeForm(ModelForm):
+
+    class Meta:
+        model = Resume
+        fields = ('name', 'surname', 'status', 'salary', 'specialty', 'education', 'experience', 'grade', 'portfolio')
+
+    def __init__(self, *args, **kwargs):
+        super(ResumeForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = "Ваше имя"
+        self.fields['surname'].label = "Ваше фамилия"
+        self.fields['status'].label = "Статус поиска"
+        self.fields['salary'].label = "Желаемая зарплата"
+        self.fields['specialty'].label = "Специальность"
+        self.fields['education'].label = "Образование"
+        self.fields['experience'].label = "Опыт"
+        self.fields['grade'].label = "Уровень"
+        self.fields['portfolio'].label = "Портфолио"
 
         self.helper = FormHelper()
         self.helper.form_tag = False
